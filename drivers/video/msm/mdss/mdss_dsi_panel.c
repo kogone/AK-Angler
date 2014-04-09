@@ -150,7 +150,7 @@ u32 mdss_dsi_panel_cmd_read(struct mdss_dsi_ctrl_pdata *ctrl, char cmd0,
 	return 0;
 }
 
-static void mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
+static int mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 			struct dsi_panel_cmds *pcmds)
 {
 	struct dcs_cmd_req cmdreq;
@@ -159,7 +159,7 @@ static void mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 	pinfo = &(ctrl->panel_data.panel_info);
 	if (pinfo->dcs_cmd_by_left) {
 		if (ctrl->ndx != DSI_CTRL_LEFT)
-			return;
+			return -EINVAL;
 	}
 
 	memset(&cmdreq, 0, sizeof(cmdreq));
@@ -177,6 +177,8 @@ static void mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 	cmdreq.cb = NULL;
 
 	mdss_dsi_cmdlist_put(ctrl, &cmdreq);
+
+	return 0;
 }
 
 static int mdss_dsi_panel_hbm_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
@@ -709,8 +711,6 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 		return -EINVAL;
 	}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 	/* Ensure low persistence is disabled */
 	mdss_dsi_panel_apply_display_setting(pdata, 0);
 
@@ -720,13 +720,9 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 	set_power_suspend_state_panel_hook(POWER_SUSPEND_INACTIVE);
 #endif
 
-=======
->>>>>>> 5b1d418... Revert "[media] drivers/media/video: Fix low-persistence blanking"
-=======
 	/* Ensure low persistence is disabled */
 	mdss_dsi_panel_apply_display_setting(pdata, 0);
 
->>>>>>> a09852f... Revert "Revert "[media] drivers/media/video: Fix low-persistence blanking""
 	pinfo = &pdata->panel_info;
 	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
@@ -744,7 +740,6 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 			(pinfo->mipi.boot_mode != pinfo->mipi.mode))
 		on_cmds = &ctrl->post_dms_on_cmds;
 
-[c[c[
 }
 
 static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
@@ -934,7 +929,8 @@ static int mdss_dsi_parse_dcs_cmds(struct device_node *np,
 			pcmds->link_state = DSI_HS_MODE;
 		else
 			pcmds->link_state = DSI_LP_MODE;
-	}
+	} else
+		pcmds->link_state = DSI_HS_MODE;
 
 	pr_debug("%s: dcs_cmd=%x len=%d, cmd_cnt=%d link_state=%d\n", __func__,
 		pcmds->buf[0], pcmds->blen, pcmds->cmd_cnt, pcmds->link_state);
@@ -1618,9 +1614,15 @@ int mdss_dsi_panel_set_hbm(struct mdss_dsi_ctrl_pdata *ctrl, int state)
 	}
 
 	if (state)
+<<<<<<< HEAD
 		rc = mdss_dsi_panel_hbm_cmds_send(ctrl, &ctrl->hbm_on_cmds);
 	else
 		rc = mdss_dsi_panel_hbm_cmds_send(ctrl, &ctrl->hbm_off_cmds);
+=======
+		rc = mdss_dsi_panel_cmds_send(ctrl, &ctrl->hbm_on_cmds);
+	else
+		rc = mdss_dsi_panel_cmds_send(ctrl, &ctrl->hbm_off_cmds);
+>>>>>>> 2f53202... msm: mdss: Allow user space control of HBM
 
 	if (!rc)
 		ctrl->panel_data.panel_info.hbm_state = state;
@@ -1631,6 +1633,7 @@ int mdss_dsi_panel_set_hbm(struct mdss_dsi_ctrl_pdata *ctrl, int state)
 	return rc;
 }
 
+<<<<<<< HEAD
 int mdss_dsi_panel_color_temp(struct device_node *pan_node,
 			struct mdss_dsi_ctrl_pdata *ctrl, int color_temp)
 {
@@ -1682,6 +1685,8 @@ int mdss_dsi_panel_color_temp(struct device_node *pan_node,
 	return 0;
 }
 
+=======
+>>>>>>> 2f53202... msm: mdss: Allow user space control of HBM
 static int mdss_panel_parse_dt(struct device_node *np,
 			struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 {
@@ -2029,6 +2034,10 @@ static int mdss_panel_parse_dt(struct device_node *np,
 
 	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->lp_off_cmds,
 		"qcom,mdss-dsi-lp-mode-off", NULL);
+	if (mdss_panel_parse_hbm(np, pinfo, ctrl_pdata)) {
+		pr_err("Error parsing HBM\n");
+		goto error;
+	}
 
 	return 0;
 
