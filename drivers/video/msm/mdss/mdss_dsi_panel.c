@@ -199,7 +199,6 @@ static int mdss_dsi_panel_hbm_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 	cmdreq.cb = NULL;
 
 	mdss_dsi_cmdlist_put(ctrl, &cmdreq);
-<<<<<<< HEAD
 
 	return 0;
 }
@@ -224,8 +223,6 @@ static int mdss_dsi_panel_hbm_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 	cmdreq.cb = NULL;
 
 	mdss_dsi_cmdlist_put(ctrl, &cmdreq);
-=======
->>>>>>> ed5fb8e... msm: mdss: request HS mode when sending HBM cmds
 
 	return 0;
 }
@@ -765,6 +762,16 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 			(pinfo->mipi.boot_mode != pinfo->mipi.mode))
 		on_cmds = &ctrl->post_dms_on_cmds;
 
+	if (ctrl->gamma_cmds.cmd_cnt)
+		mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma_cmds);
+
+	if (on_cmds->cmd_cnt)
+		mdss_dsi_panel_cmds_send(ctrl, on_cmds);
+
+end:
+	pinfo->blank_state = MDSS_PANEL_BLANK_UNBLANK;
+	pr_debug("%s:-\n", __func__);
+	return 0;
 }
 
 static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)

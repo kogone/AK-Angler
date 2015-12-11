@@ -224,10 +224,7 @@ enum mdss_intf_events {
 	MDSS_EVENT_DSI_RESET_WRITE_PTR,
 	MDSS_EVENT_PANEL_UPDATE_DSI_TIMING,
 	MDSS_EVENT_ENABLE_HBM,
-<<<<<<< HEAD
 	MDSS_EVENT_DSI_PANEL_COLOR_TEMP,
-=======
->>>>>>> 2f53202... msm: mdss: Allow user space control of HBM
 };
 
 struct lcd_panel_info {
