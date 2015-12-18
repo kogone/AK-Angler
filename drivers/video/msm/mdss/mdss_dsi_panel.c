@@ -199,6 +199,7 @@ static int mdss_dsi_panel_hbm_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 	cmdreq.cb = NULL;
 
 	mdss_dsi_cmdlist_put(ctrl, &cmdreq);
+<<<<<<< HEAD
 
 	return 0;
 }
@@ -223,6 +224,8 @@ static int mdss_dsi_panel_hbm_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 	cmdreq.cb = NULL;
 
 	mdss_dsi_cmdlist_put(ctrl, &cmdreq);
+=======
+>>>>>>> ed5fb8e... msm: mdss: request HS mode when sending HBM cmds
 
 	return 0;
 }
