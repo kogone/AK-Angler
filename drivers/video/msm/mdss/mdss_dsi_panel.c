@@ -150,7 +150,36 @@ u32 mdss_dsi_panel_cmd_read(struct mdss_dsi_ctrl_pdata *ctrl, char cmd0,
 	return 0;
 }
 
-static int mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
+static void mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
+			struct dsi_panel_cmds *pcmds)
+{
+	struct dcs_cmd_req cmdreq;
+	struct mdss_panel_info *pinfo;
+
+	pinfo = &(ctrl->panel_data.panel_info);
+	if (pinfo->dcs_cmd_by_left) {
+		if (ctrl->ndx != DSI_CTRL_LEFT)
+			return;
+	}
+
+	memset(&cmdreq, 0, sizeof(cmdreq));
+	cmdreq.cmds = pcmds->cmds;
+	cmdreq.cmds_cnt = pcmds->cmd_cnt;
+	cmdreq.flags = CMD_REQ_COMMIT;
+
+	/*Panel ON/Off commands should be sent in DSI Low Power Mode*/
+	if (pcmds->link_state == DSI_LP_MODE)
+		cmdreq.flags  |= CMD_REQ_LP_MODE;
+	else if (pcmds->link_state == DSI_HS_MODE)
+		cmdreq.flags |= CMD_REQ_HS_MODE;
+
+	cmdreq.rlen = 0;
+	cmdreq.cb = NULL;
+
+	mdss_dsi_cmdlist_put(ctrl, &cmdreq);
+}
+
+static int mdss_dsi_panel_hbm_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 			struct dsi_panel_cmds *pcmds)
 {
 	struct dcs_cmd_req cmdreq;
@@ -165,14 +194,7 @@ static int mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 	memset(&cmdreq, 0, sizeof(cmdreq));
 	cmdreq.cmds = pcmds->cmds;
 	cmdreq.cmds_cnt = pcmds->cmd_cnt;
-	cmdreq.flags = CMD_REQ_COMMIT;
-
-	/*Panel ON/Off commands should be sent in DSI Low Power Mode*/
-	if (pcmds->link_state == DSI_LP_MODE)
-		cmdreq.flags  |= CMD_REQ_LP_MODE;
-	else if (pcmds->link_state == DSI_HS_MODE)
-		cmdreq.flags |= CMD_REQ_HS_MODE;
-
+	cmdreq.flags = CMD_REQ_COMMIT | CMD_REQ_HS_MODE;
 	cmdreq.rlen = 0;
 	cmdreq.cb = NULL;
 
@@ -929,8 +951,7 @@ static int mdss_dsi_parse_dcs_cmds(struct device_node *np,
 			pcmds->link_state = DSI_HS_MODE;
 		else
 			pcmds->link_state = DSI_LP_MODE;
-	} else
-		pcmds->link_state = DSI_HS_MODE;
+	}
 
 	pr_debug("%s: dcs_cmd=%x len=%d, cmd_cnt=%d link_state=%d\n", __func__,
 		pcmds->buf[0], pcmds->blen, pcmds->cmd_cnt, pcmds->link_state);
@@ -1614,15 +1635,9 @@ int mdss_dsi_panel_set_hbm(struct mdss_dsi_ctrl_pdata *ctrl, int state)
 	}
 
 	if (state)
-<<<<<<< HEAD
 		rc = mdss_dsi_panel_hbm_cmds_send(ctrl, &ctrl->hbm_on_cmds);
 	else
 		rc = mdss_dsi_panel_hbm_cmds_send(ctrl, &ctrl->hbm_off_cmds);
-=======
-		rc = mdss_dsi_panel_cmds_send(ctrl, &ctrl->hbm_on_cmds);
-	else
-		rc = mdss_dsi_panel_cmds_send(ctrl, &ctrl->hbm_off_cmds);
->>>>>>> 2f53202... msm: mdss: Allow user space control of HBM
 
 	if (!rc)
 		ctrl->panel_data.panel_info.hbm_state = state;
@@ -1633,7 +1648,6 @@ int mdss_dsi_panel_set_hbm(struct mdss_dsi_ctrl_pdata *ctrl, int state)
 	return rc;
 }
 
-<<<<<<< HEAD
 int mdss_dsi_panel_color_temp(struct device_node *pan_node,
 			struct mdss_dsi_ctrl_pdata *ctrl, int color_temp)
 {
@@ -1685,8 +1699,6 @@ int mdss_dsi_panel_color_temp(struct device_node *pan_node,
 	return 0;
 }
 
-=======
->>>>>>> 2f53202... msm: mdss: Allow user space control of HBM
 static int mdss_panel_parse_dt(struct device_node *np,
 			struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 {
