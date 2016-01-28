@@ -24,10 +24,6 @@
 #include <linux/display_state.h>
 #include "mdss_dsi.h"
 
-#ifdef CONFIG_POWERSUSPEND
-#include <linux/powersuspend.h>
-#endif
-
 #define DT_CMD_HDR 6
 #define MIN_REFRESH_RATE 30
 
@@ -177,30 +173,6 @@ static void mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 	cmdreq.cb = NULL;
 
 	mdss_dsi_cmdlist_put(ctrl, &cmdreq);
-}
-
-static int mdss_dsi_panel_hbm_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
-			struct dsi_panel_cmds *pcmds)
-{
-	struct dcs_cmd_req cmdreq;
-	struct mdss_panel_info *pinfo;
-
-	pinfo = &(ctrl->panel_data.panel_info);
-	if (pinfo->dcs_cmd_by_left) {
-		if (ctrl->ndx != DSI_CTRL_LEFT)
-			return -EINVAL;
-	}
-
-	memset(&cmdreq, 0, sizeof(cmdreq));
-	cmdreq.cmds = pcmds->cmds;
-	cmdreq.cmds_cnt = pcmds->cmd_cnt;
-	cmdreq.flags = CMD_REQ_COMMIT | CMD_REQ_HS_MODE;
-	cmdreq.rlen = 0;
-	cmdreq.cb = NULL;
-
-	mdss_dsi_cmdlist_put(ctrl, &cmdreq);
-
-	return 0;
 }
 
 static int mdss_dsi_panel_hbm_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
@@ -738,13 +710,6 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 
 	display_on = true;
 
-#ifdef CONFIG_POWERSUSPEND
-	set_power_suspend_state_panel_hook(POWER_SUSPEND_INACTIVE);
-#endif
-
-	/* Ensure low persistence is disabled */
-	mdss_dsi_panel_apply_display_setting(pdata, 0);
-
 	pinfo = &pdata->panel_info;
 	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
@@ -802,10 +767,6 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 		mdss_dsi_panel_cmds_send(ctrl, &ctrl->off_cmds);
 
 	display_on = false;
-
-#ifdef CONFIG_POWERSUSPEND
-	set_power_suspend_state_panel_hook(POWER_SUSPEND_ACTIVE);
-#endif
 
 end:
 	pinfo->blank_state = MDSS_PANEL_BLANK_BLANK;
@@ -2063,9 +2024,6 @@ static int mdss_panel_parse_dt(struct device_node *np,
 
 	return 0;
 
-
-	return 0;
-
 error:
 	return -EINVAL;
 }
@@ -2120,3 +2078,4 @@ int mdss_dsi_panel_init(struct device_node *node,
 
 	return 0;
 }
+
