@@ -2028,11 +2028,10 @@ static int mdss_panel_parse_dt(struct device_node *np,
 		"qcom,mdss-dsi-lp-mode-on", NULL);
 
 	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->lp_off_cmds,
+		"qcom,mdss-dsi-lp-mode-off", NULL);
 
-	if (mdss_panel_parse_hbm(np, pinfo, ctrl_pdata)) {
-		pr_err("Error parsing HBM\n");
-		goto error;
-	}
+	return 0;
+
 
 	return 0;
 
