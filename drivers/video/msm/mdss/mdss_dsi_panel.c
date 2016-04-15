@@ -709,6 +709,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	/* Ensure low persistence is disabled */
 	mdss_dsi_panel_apply_display_setting(pdata, 0);
 
@@ -718,6 +719,8 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 	set_power_suspend_state_panel_hook(POWER_SUSPEND_INACTIVE);
 #endif
 
+=======
+>>>>>>> 5b1d418... Revert "[media] drivers/media/video: Fix low-persistence blanking"
 	pinfo = &pdata->panel_info;
 	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
