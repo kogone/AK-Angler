@@ -710,6 +710,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 	}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	/* Ensure low persistence is disabled */
 	mdss_dsi_panel_apply_display_setting(pdata, 0);
 
@@ -721,6 +722,11 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 
 =======
 >>>>>>> 5b1d418... Revert "[media] drivers/media/video: Fix low-persistence blanking"
+=======
+	/* Ensure low persistence is disabled */
+	mdss_dsi_panel_apply_display_setting(pdata, 0);
+
+>>>>>>> a09852f... Revert "Revert "[media] drivers/media/video: Fix low-persistence blanking""
 	pinfo = &pdata->panel_info;
 	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
@@ -738,16 +744,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 			(pinfo->mipi.boot_mode != pinfo->mipi.mode))
 		on_cmds = &ctrl->post_dms_on_cmds;
 
-	if (ctrl->gamma_cmds.cmd_cnt)
-		mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma_cmds);
-
-	if (on_cmds->cmd_cnt)
-		mdss_dsi_panel_cmds_send(ctrl, on_cmds);
-
-end:
-	pinfo->blank_state = MDSS_PANEL_BLANK_UNBLANK;
-	pr_debug("%s:-\n", __func__);
-	return 0;
+[c[c[
 }
 
 static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
