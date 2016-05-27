@@ -589,9 +589,9 @@ endif # $(dot-config)
 all: vmlinux
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
-KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,)
+KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,misleading-indentation,)
 else
-KBUILD_CFLAGS	+= -O3 -Wno-maybe-uninitialized
+KBUILD_CFLAGS	+= -O3 -Wno-maybe-uninitialized -Wno-misleading-indentation -Wno-unused-const-variable -Wno-bool-compare -Wno-tautological-compare
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
