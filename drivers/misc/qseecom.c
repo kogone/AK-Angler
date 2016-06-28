@@ -436,7 +436,7 @@ static int qseecom_scm_call2(uint32_t svc_id, uint32_t tz_cmd_id,
 		}
 		case QSEOS_REGISTER_LISTENER: {
 			struct qseecom_register_listener_ireq *req;
-			req = (struct qseecom_register_listener_ireq *)req_buf;
+			struct qseecom_register_listener_64bit_ireq *req_64bit;
 			smc_id = TZ_OS_REGISTER_LISTENER_ID;
 			desc.arginfo =
 				TZ_OS_REGISTER_LISTENER_ID_PARAM_ID;
@@ -1775,7 +1775,7 @@ static int qseecom_unload_app(struct qseecom_dev_handle *data,
 			pr_err("scm_call to unload app (id = %d) failed\n",
 								req.app_id);
 			ret = -EFAULT;
-			goto unload_exit;
+			goto not_release_exit;
 		} else {
 			pr_warn("App id %d now unloaded\n", req.app_id);
 		}
@@ -1783,7 +1783,7 @@ static int qseecom_unload_app(struct qseecom_dev_handle *data,
 			pr_err("app (%d) unload_failed!!\n",
 					data->client.app_id);
 			ret = -EFAULT;
-			goto unload_exit;
+			goto not_release_exit;
 		}
 		if (resp.result == QSEOS_RESULT_SUCCESS)
 			pr_debug("App (%d) is unloaded!!\n",
@@ -1794,7 +1794,7 @@ static int qseecom_unload_app(struct qseecom_dev_handle *data,
 			if (ret) {
 				pr_err("process_incomplete_cmd fail err: %d\n",
 									ret);
-				goto unload_exit;
+				goto not_release_exit;
 			}
 		}
 	}
@@ -1824,6 +1824,7 @@ static int qseecom_unload_app(struct qseecom_dev_handle *data,
 unload_exit:
 	qseecom_unmap_ion_allocated_memory(data);
 	data->released = true;
+not_release_exit:
 	return ret;
 }
 
@@ -3654,15 +3655,13 @@ static int qseecom_load_external_elf(struct qseecom_dev_handle *data,
 	struct qseecom_load_img_req load_img_req;
 	int uret = 0;
 	int ret;
-	int set_cpu_ret = 0;
 	ion_phys_addr_t pa = 0;
 	size_t len;
 	struct qseecom_load_app_ireq load_req;
 	struct qseecom_load_app_64bit_ireq load_req_64bit;
 	struct qseecom_command_scm_resp resp;
 	void *cmd_buf = NULL;
-	struct qseecom_command_scm_resp resp;
-
+	size_t cmd_len;
 	/* Copy the relevant information needed for loading the image */
 	if (copy_from_user(&load_img_req,
 				(void __user *)argp,
@@ -3765,15 +3764,6 @@ exit_register_bus_bandwidth_needs:
 	}
 
 exit_cpu_restore:
-	/* Restore the CPU mask */
-	mask = CPU_MASK_ALL;
-	set_cpu_ret = set_cpus_allowed_ptr(current, &mask);
-	if (set_cpu_ret) {
-		pr_err("set_cpus_allowed_ptr failed to restore mask: ret %d\n",
-				set_cpu_ret);
-		ret = -EFAULT;
-	}
-exit_ion_free:
 	/* Deallocate the handle */
 	if (!IS_ERR_OR_NULL(ihandle))
 		ion_free(qseecom.ion_clnt, ihandle);
@@ -5749,7 +5739,7 @@ static int qseecom_release(struct inode *inode, struct file *file)
 		case QSEECOM_LISTENER_SERVICE:
 			mutex_lock(&app_access_lock);
 			ret = qseecom_unregister_listener(data);
-			ret = qseecom_unregister_listener(data);
+			mutex_unlock(&app_access_lock);
 			break;
 		case QSEECOM_CLIENT_APP:
 			ret = qseecom_unload_app(data, true);
@@ -5958,7 +5948,6 @@ static int qseecom_probe(struct platform_device *pdev)
 	int ret = 0;
 	uint32_t feature = 10;
 	struct device *class_dev;
-	char qsee_not_legacy = 0;
 	struct msm_bus_scale_pdata *qseecom_platform_support = NULL;
 	struct qseecom_command_scm_resp resp;
 
@@ -6034,23 +6023,6 @@ static int qseecom_probe(struct platform_device *pdev)
 	pr_info("qseecom.qsee_version = 0x%x\n", resp.result);
 	if (rc) {
 		pr_err("Failed to get QSEE version info %d\n", rc);
-		goto exit_del_cdev;
-	}
-	qseecom.qsee_version = resp.result;
-	qseecom.qseos_version = QSEOS_VERSION_14;
-	qseecom.commonlib_loaded = false;
-	qseecom.pdev = class_dev;
-	/* Create ION msm client */
-	qseecom.ion_clnt = msm_ion_client_create("qseecom-kernel");
-	if (qseecom.ion_clnt == NULL) {
-		pr_err("Ion client cannot be created\n");
-		rc = -ENOMEM;
-		goto exit_del_cdev;
-	}
-
-	/* register client for bus scaling */
-	if (pdev->dev.of_node) {
-		qseecom.pdev->of_node = pdev->dev.of_node;
 		goto exit_del_cdev;
 	}
 	qseecom.qsee_version = resp.result;
@@ -6227,7 +6199,7 @@ static int qseecom_probe(struct platform_device *pdev)
 			struct qsee_apps_region_info_64bit_ireq req_64bit;
 			struct qseecom_command_scm_resp resp;
 			void *cmd_buf = NULL;
-			struct qseecom_command_scm_resp resp;
+			size_t cmd_len;
 
 			resource = platform_get_resource_byname(pdev,
 					IORESOURCE_MEM, "secapp-region");
@@ -6529,3 +6501,4 @@ MODULE_DESCRIPTION("Qualcomm Secure Execution Environment Communicator");
 
 module_init(qseecom_init);
 module_exit(qseecom_exit);
+
