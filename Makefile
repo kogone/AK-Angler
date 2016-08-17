@@ -1,7 +1,7 @@
 VERSION = 3
 PATCHLEVEL = 10
-SUBLEVEL = 101
-EXTRAVERSION =
+SUBLEVEL = 102
+EXTRAVERSION =-JC
 NAME = TOSSUG Baby Fish
 
 # *DOCUMENTATION*
@@ -350,7 +350,7 @@ CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 CFLAGS_MODULE   =
 AFLAGS_MODULE   =
 LDFLAGS_MODULE  = --strip-debug
-CFLAGS_KERNEL	=
+CFLAGS_KERNEL	= -fmodulo-sched -fmodulo-sched-allow-regmoves -ftree-loop-vectorize -ftree-loop-distribute-patterns -ftree-slp-vectorize -fvect-cost-model -ftree-partial-pre -fgcse-after-reload -fgcse-lm -fgcse-sm -fsched-spec-load -ffast-math -fsingle-precision-constant -fpredictive-commoning -mcpu=cortex-a57.cortex-a53 -mtune=cortex-a57.cortex-a53
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
@@ -386,12 +386,22 @@ LINUXINCLUDE    := \
 KBUILD_CPPFLAGS := -D__KERNEL__
 
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common \
-		   -Werror-implicit-function-declaration \
-		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks\
-		   -std=gnu89 \
-		   $(GEN_OPT_FLAGS)
+                   -fno-strict-aliasing -fno-common \
+                   -Werror-implicit-function-declaration \
+                   -Wno-format-security \
+                   -fno-delete-null-pointer-checks -ftree-loop-vectorize \
+                   -ftree-loop-distribute-patterns -ftree-slp-vectorize \
+                   -fvect-cost-model -ftree-partial-pre -fgcse-lm -fgcse-sm \
+                   -fsched-spec-load -fsingle-precision-constant \
+                   -std=gnu89 \
+                   $(GEN_OPT_FLAGS)
+
+# F*** you, GCC 6.1+
+KBUILD_CFLAGS   += -Wno-misleading-indentation -Wno-tautological-compare -Wno-trigraphs -Wno-unused-label \
+                   -Wno-unused-const-variable -Wno-misleading-indentation -Wno-unused-function -Wno-declaration-after-statement \
+		   -Wno-discarded-qualifiers -Wno-implicit-function-declaration \
+                   -Wno-tautological-compare -Wno-bool-compare -Wno-array-bounds -Wno-int-conversion \
+                   -Wno-incompatible-pointer-types -Wno-unused-variable -Wno-parentheses 
 KBUILD_AFLAGS_KERNEL := $(GEN_OPT_FLAGS)
 KBUILD_CFLAGS_KERNEL := $(GEN_OPT_FLAGS)
 KBUILD_AFLAGS   := -D__ASSEMBLY__
@@ -684,7 +694,7 @@ NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC) -print-file-name=include)
 CHECKFLAGS     += $(NOSTDINC_FLAGS)
 
 # warn about C99 declaration after statement
-KBUILD_CFLAGS += $(call cc-option,-Wdeclaration-after-statement,)
+# KBUILD_CFLAGS += $(call cc-option,-Wdeclaration-after-statement,)
 
 # disable pointer signed / unsigned warnings in gcc 4.0
 KBUILD_CFLAGS += $(call cc-disable-warning, pointer-sign)
